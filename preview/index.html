@@ -1,0 +1,521 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Lunak Player — UI Preview</title>
+<style>
+  @import url('https://fonts.googleapis.com/css2?family=Anton&display=swap');
+  :root{
+    --paper:#E7EAEE;
+    --paper-hi:#F2F4F6;
+    --panel:#F8F9FB;
+    --line:#B2B9C4;
+    --hair:#8B93A1;
+    --navy:#101E3E;
+    --blue:#1B3FA8;
+    --blue-bright:#2A57D6;
+    --card:#16346F;
+    --card-deep:#0D2450;
+  }
+  *{box-sizing:border-box;margin:0;padding:0;}
+  body{
+    min-height:100vh;
+    background:
+      radial-gradient(1200px 700px at 50% -10%, #2a3038 0%, #14171c 55%, #0c0e12 100%);
+    font-family:-apple-system,BlinkMacSystemFont,"SF Pro Text","Helvetica Neue",Arial,"PingFang SC",sans-serif;
+    display:flex; flex-direction:column; align-items:center; justify-content:center;
+    padding:40px 16px; gap:18px;
+  }
+  .caption{
+    font-family:ui-monospace,"SF Mono",Menlo,monospace;
+    font-size:10px; letter-spacing:2.4px; color:#6d7683; text-transform:uppercase;
+  }
+  .device{
+    width:390px; height:844px; border-radius:44px; overflow:hidden; position:relative;
+    background:var(--paper);
+    box-shadow:0 40px 90px rgba(0,0,0,.55), 0 0 0 9px #1b1e23, 0 0 0 10px #33383f;
+  }
+  /* paper texture */
+  .device::before{
+    content:""; position:absolute; inset:0; pointer-events:none; z-index:0;
+    background:
+      repeating-linear-gradient(90deg, rgba(255,255,255,.55) 0 1px, transparent 1px 4px),
+      linear-gradient(160deg,#F0F2F5 0%, #E2E6EB 60%, #E9ECF0 100%);
+  }
+  .grooves{
+    position:absolute; right:-46%; top:52%; width:700px; height:700px; border-radius:50%;
+    background:repeating-radial-gradient(circle, rgba(16,30,62,.055) 0 1px, transparent 1px 9px);
+    opacity:.7; pointer-events:none; z-index:0;
+  }
+  .scroll{
+    position:relative; z-index:1; height:100%; overflow-y:auto; padding:14px 18px 28px;
+    scrollbar-width:none;
+  }
+  .scroll::-webkit-scrollbar{display:none;}
+
+  /* ---------- masthead ---------- */
+  .topline{display:flex; justify-content:space-between; align-items:flex-start;}
+  .wordmark{
+    padding-bottom:5px;
+    font-family:"Anton",Impact,"Haettenschweiler","Arial Narrow",sans-serif;
+    font-size:25px; letter-spacing:.5px; color:var(--navy); line-height:1;
+    display:flex; align-items:flex-start; gap:3px;
+  }
+  .wordmark .star{margin-top:-3px;}
+  .tech{text-align:right; font-family:ui-monospace,Menlo,monospace; font-size:6.5px;
+        letter-spacing:1.6px; color:rgba(16,30,62,.72); line-height:1.6;}
+
+  .headline{margin-top:6px;}
+  .headline .l1,.headline .l2{ -webkit-text-stroke:.7px currentColor;
+    font-family:"Anton",Impact,"Haettenschweiler","Arial Narrow",sans-serif;
+    font-size:56px; line-height:.86; letter-spacing:-1.6px; text-transform:uppercase;
+    -webkit-font-smoothing:antialiased;
+  }
+  .headline .l1{color:var(--navy);}
+  .headline .row2{display:flex; align-items:flex-end; justify-content:space-between; gap:8px;}
+  .headline .l2{color:var(--blue);}
+  .genre{text-align:right; padding-bottom:8px;}
+  .genre .g1{font-family:ui-monospace,Menlo,monospace; font-size:6.2px; letter-spacing:1.8px;
+             color:rgba(16,30,62,.8); margin-top:4px;}
+  .genre .g2{font-family:ui-monospace,Menlo,monospace; font-size:5.2px; letter-spacing:1.2px;
+             color:rgba(139,147,161,.95); margin-top:2px;}
+
+  /* ---------- player window ---------- */
+  .window{
+    margin-top:12px; border-radius:9px; background:var(--panel);
+    border:1px solid rgba(178,185,196,.9);
+    box-shadow:0 14px 26px rgba(16,30,62,.16);
+    overflow:hidden;
+  }
+  .titlebar{
+    height:23px; display:flex; align-items:center; gap:5px; padding:0 8px;
+    background:linear-gradient(#20428C,#17346E);
+    font-family:ui-monospace,Menlo,monospace; font-size:6.5px; letter-spacing:1.35px;
+    color:rgba(255,255,255,.93); font-weight:700;
+  }
+  .titlebar .dot{width:6px;height:6px;border-radius:50%;background:#0B1B44;
+                 box-shadow:0 0 0 .6px rgba(255,255,255,.5);}
+  .titlebar .spacer{flex:1;}
+  .titlebar .fmt{font-weight:400; letter-spacing:.5px; color:rgba(255,255,255,.55); font-size:5.5px;}
+  .wbtns{display:flex; gap:2px; margin-left:3px;}
+  .wbtn{width:8px;height:8px;border:.6px solid rgba(255,255,255,.55);border-radius:.5px;}
+  .wbtn.on{background:rgba(255,255,255,.85);}
+
+  .chassis{padding:7px; display:flex; flex-direction:column; gap:7px;
+           background:linear-gradient(#EDF1F8,#DDE5F2);}
+
+  /* ---------- CD stage ---------- */
+  .stage{
+    position:relative; height:298px; border-radius:3px; overflow:hidden;
+    border:1px solid rgba(139,147,161,.5);
+    background:
+      repeating-linear-gradient(45deg, rgba(255,255,255,.5) 0 1px, transparent 1px 7px),
+      linear-gradient(135deg,#EFF3F9,#D9E2F0);
+  }
+  .stage .corner{
+    position:absolute; font-family:ui-monospace,Menlo,monospace; font-size:6px;
+    letter-spacing:1.1px; color:rgba(139,147,161,.95); text-transform:uppercase;
+  }
+  .stage .tl{left:8px;top:7px;} .stage .tr{right:8px;top:7px;}
+  .stage .bl{left:8px;bottom:6px;} .stage .br{right:8px;bottom:6px;}
+
+  .case{
+    position:absolute; left:16px; top:50%; transform:translateY(-50%);
+    width:207px; height:213px; border-radius:2px; padding:4px;
+    background:#F5F7FB; border:1px solid #fff;
+    box-shadow:4px 6px 10px rgba(0,0,0,.22);
+    display:flex; gap:0;
+  }
+  .spine{
+    width:38px; height:205px; display:flex; align-items:center; justify-content:center;
+    background:linear-gradient(#E6EDFA,#C9D8F0); overflow:hidden;
+  }
+  .spine span{
+    font-family:"Anton",Impact,"Arial Narrow",sans-serif; font-size:18px; letter-spacing:-.3px;
+    color:rgba(27,63,168,.92); text-transform:uppercase; white-space:nowrap;
+    transform:rotate(-90deg); display:block;
+  }
+  .art{
+    flex:1; position:relative; overflow:hidden;
+    background:linear-gradient(135deg,#C9D7EC 0%,#41639F 55%,#11274F 100%);
+  }
+  .art .glow{
+    position:absolute; width:220px;height:220px;border-radius:50%;
+    left:-90px; top:-70px; background:rgba(255,255,255,.30); filter:blur(22px);
+  }
+  .art .ring{position:absolute; width:105px;height:105px;border-radius:50%;
+             border:1px solid rgba(255,255,255,.28); left:44px; top:52px;}
+  .art .spark{position:absolute; right:14px; top:26px;}
+  .art .brand{position:absolute; right:5px; bottom:4px; font-family:ui-monospace,Menlo,monospace;
+              font-size:5px; letter-spacing:1.4px; color:rgba(255,255,255,.85);}
+  .art .edition{position:absolute; right:5px; top:5px; background:rgba(27,63,168,.88);
+                color:rgba(255,255,255,.92); font-family:ui-monospace,Menlo,monospace;
+                font-size:6px; font-weight:700; padding:1px 3px;}
+
+  .discwrap{
+    position:absolute; left:50%; top:50%;
+    width:244px;height:244px; margin-left:-67px; margin-top:-122px;
+    border-radius:50%;
+    box-shadow:4px 8px 18px rgba(16,30,62,.32);
+  }
+  .disc{
+    position:absolute; inset:0; border-radius:50%;
+    background:
+      radial-gradient(circle at 28% 22%, rgba(255,255,255,.55), rgba(255,255,255,0) 46%),
+      conic-gradient(from 210deg,
+        #2F5CD4 0deg, #152A66 70deg, #5182EA 145deg,
+        #0E1E4C 220deg, #2F5CD4 320deg, #2F5CD4 360deg);
+    box-shadow:inset 0 0 0 1px rgba(255,255,255,.45);
+    animation:spin 6s linear infinite;
+    animation-play-state:paused;
+  }
+  .disc::after{
+    content:""; position:absolute; inset:0; border-radius:50%;
+    background:repeating-radial-gradient(circle, rgba(255,255,255,.06) 0 1px, transparent 1px 7px);
+  }
+  .playing .disc{animation-play-state:running;}
+  @keyframes spin{from{transform:rotate(0)}to{transform:rotate(360deg)}}
+
+  .label{
+    position:absolute; left:50%; top:50%; transform:translate(-50%,-50%);
+    width:100px;height:100px; border-radius:50%; background:#F7F9FC;
+    box-shadow:0 0 0 1px rgba(0,0,0,.1);
+    display:flex; align-items:center; justify-content:center;
+  }
+  .label::after{content:""; width:37px;height:37px;border-radius:50%;background:#15275C;}
+  .discname{
+    position:absolute; left:50%; top:50%; transform:translate(-50%,-50%);
+    width:244px; text-align:center;
+  }
+  .discname .nm{
+    position:absolute; left:50%; top:-96px; transform:translateX(-54%);
+    font-family:"Anton",Impact,"Arial Narrow",sans-serif; font-size:17px; letter-spacing:.5px;
+    color:rgba(255,255,255,.94); text-transform:lowercase;
+  }
+  .discname .bar{position:absolute; left:50%; top:-70px; transform:translateX(-50%);
+                width:40px;height:.7px;background:rgba(255,255,255,.45);}
+  .discname .code{
+    position:absolute; left:50%; top:76px; transform:translateX(-50%);
+    font-family:ui-monospace,Menlo,monospace; font-size:7.4px; letter-spacing:1.3px;
+    color:rgba(255,255,255,.55); white-space:nowrap;
+  }
+
+  /* ---------- now playing plate ---------- */
+  .plate{
+    border-radius:2px; padding:8px 10px 6px; color:#fff;
+    background:
+      repeating-linear-gradient(0deg, rgba(255,255,255,.045) 0 1px, transparent 1px 11px),
+      repeating-linear-gradient(90deg, rgba(255,255,255,.045) 0 1px, transparent 1px 11px),
+      linear-gradient(#193A74,#0D2353);
+  }
+  .plate .row{display:flex; justify-content:space-between; align-items:flex-start;}
+  .kicker{font-family:ui-monospace,Menlo,monospace; font-size:6.5px; letter-spacing:.9px;
+          color:rgba(255,255,255,.55); display:flex; gap:3px;}
+  .track{font-size:21px; font-weight:700; letter-spacing:-.4px; margin-top:1px; white-space:nowrap;
+         overflow:hidden; text-overflow:ellipsis;}
+  .artist{font-family:ui-monospace,Menlo,monospace; font-size:6.5px; letter-spacing:.9px;
+          color:rgba(255,255,255,.48); margin-top:1px;}
+  .clock{text-align:right;}
+  .clock .state{font-family:ui-monospace,Menlo,monospace; font-size:5.8px; letter-spacing:1px;
+                color:rgba(255,255,255,.55);}
+  .clock .now{font-size:23px; font-weight:600; letter-spacing:-.5px; font-variant-numeric:tabular-nums;}
+  .clock .total{font-family:ui-monospace,Menlo,monospace; font-size:6.5px; letter-spacing:.9px;
+                color:rgba(255,255,255,.45);}
+
+  .spectrum{display:flex; align-items:center; gap:2.2px; height:30px; margin-top:6px;}
+  .spectrum i{
+    flex:1; height:100%; border-radius:2px; background:rgba(255,255,255,.50);
+    transform-origin:center; transform:scaleY(.12);
+    animation:pump .62s ease-in-out infinite alternate;
+  }
+  .playing .spectrum i{animation-play-state:running;}
+  .spectrum i{animation-play-state:paused;}
+  @keyframes pump{from{transform:scaleY(.10)}to{transform:scaleY(.95)}}
+
+  .scrub{height:2px; border-radius:2px; background:rgba(255,255,255,.16); margin-top:5px; position:relative;}
+  .scrub::after{content:""; position:absolute; left:0; top:0; height:2px; width:16%;
+                border-radius:2px; background:rgba(255,255,255,.85);}
+  .plate .foot{display:flex; justify-content:space-between; margin-top:4px;
+               font-family:ui-monospace,Menlo,monospace; font-size:5.2px; letter-spacing:.9px;
+               color:rgba(255,255,255,.38);}
+
+  /* ---------- transport ---------- */
+  .transport{display:flex; align-items:center; gap:6px; padding:4px 4px 0;}
+  .tstate{width:40px; font-family:ui-monospace,Menlo,monospace; font-size:5.2px;
+          letter-spacing:1.2px; color:var(--hair); line-height:1.5;}
+  .tstate b{display:block; color:rgba(27,63,168,.9); font-weight:500;}
+  .pad{flex:1; display:flex; justify-content:center; align-items:flex-start; gap:10px;}
+  .btn{display:flex; flex-direction:column; align-items:center; gap:3px;}
+  .btn .circle{
+    width:28px;height:28px;border-radius:50%;background:#FAFBFD;
+    border:.9px solid rgba(27,63,168,.4);
+    display:flex; align-items:center; justify-content:center;
+    box-shadow:inset 0 0 0 1px rgba(255,255,255,.95), 0 1px 2px rgba(16,30,62,.10);
+  }
+  .btn .circle svg{fill:rgba(27,63,168,.9);}
+  .btn span{font-family:ui-monospace,Menlo,monospace; font-size:4.8px; letter-spacing:.9px; color:rgba(139,147,161,.85);}
+  .btn.main .circle{
+    width:50px;height:50px; border:none; border-radius:50%;
+    background:linear-gradient(#2E5EE0,#16358F);
+    box-shadow:inset 0 0 0 .8px rgba(255,255,255,.55), 0 3px 8px rgba(27,63,168,.42),
+               0 0 0 6px rgba(27,63,168,.16);
+  }
+  .btn.main .circle svg{fill:#fff;}
+  .btn.main{margin-top:-11px;}
+  .vol{display:flex; align-items:center; gap:5px;
+       font-family:ui-monospace,Menlo,monospace; font-size:5.2px; letter-spacing:1px; color:var(--hair);}
+  .vol .rail{width:62px;height:3px;border-radius:2px;background:#C8D2E2;position:relative;}
+  .vol .rail::after{content:"";position:absolute;left:0;top:0;height:3px;width:78%;border-radius:2px;background:var(--blue);}
+  .vol .rail::before{content:"";position:absolute;left:78%;top:50%;width:9px;height:9px;margin:-4.5px 0 0 -4px;
+                     border-radius:50%;background:#fff;box-shadow:0 0 0 .8px rgba(27,63,168,.45);}
+
+  .winfoot{display:flex; align-items:center; gap:6px; padding:4px 3px 2px;
+           border-top:.6px solid rgba(139,147,161,.32);
+           font-family:ui-monospace,Menlo,monospace; font-size:5.2px; letter-spacing:.9px;
+           color:rgba(139,147,161,.9);}
+  .winfoot .spacer{flex:1;}
+  .barcode{display:flex; gap:1px; align-items:center; height:8px;}
+  .barcode i{background:rgba(139,147,161,.85); height:100%; display:block;}
+
+  /* ---------- lyrics ---------- */
+  .lyrics{
+    margin-top:12px; border-radius:7px; overflow:hidden; position:relative;
+    padding:10px 14px 9px; color:#fff;
+    background:
+      repeating-linear-gradient(0deg, rgba(255,255,255,.045) 0 1px, transparent 1px 12px),
+      repeating-linear-gradient(90deg, rgba(255,255,255,.045) 0 1px, transparent 1px 12px),
+      linear-gradient(135deg,#19396F,#0B1F48);
+    box-shadow:0 10px 20px rgba(16,30,62,.20);
+    border:.8px solid rgba(255,255,255,.12);
+  }
+  .lyr-top{display:flex; justify-content:space-between; align-items:center;}
+  .lyr-tag{display:flex; align-items:center; gap:4px; font-family:ui-monospace,Menlo,monospace;
+           font-size:6.5px; letter-spacing:1.5px; color:rgba(255,255,255,.72);}
+  .lyr-tag::before{content:""; width:4px;height:4px;border-radius:.8px;background:#fff;}
+  .lyr-meta{font-family:ui-monospace,Menlo,monospace; font-size:5.2px; letter-spacing:1.1px;
+            color:rgba(255,255,255,.35);}
+  .lyr-body{height:74px; display:flex; flex-direction:column; align-items:center; justify-content:center; gap:4px;}
+  .lyr-main{-webkit-text-stroke:.5px #fff;
+    font-family:"Anton",Impact,"Arial Narrow",sans-serif; font-size:25px; letter-spacing:.5px;
+    text-transform:uppercase; font-style:italic; white-space:nowrap;
+  }
+  .lyr-sub{font-size:11px; letter-spacing:2px; color:rgba(255,255,255,.82);}
+  .lyr-rule{height:1px; margin-top:2px;
+            background:repeating-linear-gradient(90deg, rgba(255,255,255,.35) 0 3px, transparent 3px 6px);}
+
+  /* ---------- library bar ---------- */
+  .libbar{
+    margin-top:12px; display:flex; align-items:center; gap:8px;
+    padding:11px 12px; border-radius:3px;
+    background:rgba(255,255,255,.5); border:.7px solid rgba(139,147,161,.32);
+    font-family:ui-monospace,Menlo,monospace; font-size:6.4px; letter-spacing:1.4px;
+  }
+  .libbar .strong{color:rgba(16,30,62,.85); font-weight:700;}
+  .libbar .dash{width:22px;height:.7px;background:rgba(139,147,161,.45);}
+  .libbar .count{color:var(--hair);}
+  .libbar .spacer{flex:1;}
+  .libbar .cta{color:rgba(27,63,168,.9);}
+  .colophon{
+    margin-top:14px; text-align:center; font-family:ui-monospace,Menlo,monospace;
+    font-size:5px; letter-spacing:1.2px; color:rgba(139,147,161,.75); line-height:1.9;
+  }
+</style>
+</head>
+<body>
+
+<div class="caption">Lunak Player · UI Preview · 390 × 844</div>
+
+<div class="device" id="device">
+  <div class="grooves"></div>
+  <div class="scroll">
+
+    <div class="topline">
+      <div class="wordmark">lunak
+        <span class="star">
+          <svg width="10" height="10" viewBox="0 0 10 10"><path d="M5 0Q5.5 4.4 10 5Q5.5 5.6 5 10Q4.5 5.6 0 5Q4.5 4.4 5 0Z" fill="#101E3E"/></svg>
+        </span>
+      </div>
+      <div class="tech">DIGITAL AUDIO<br>STEREO / 001</div>
+    </div>
+
+    <div class="headline">
+      <div class="l1">CHERRY</div>
+      <div class="row2">
+        <div class="l2">CANDY</div>
+        <div class="genre">
+          <svg width="13" height="13" viewBox="0 0 10 10" style="display:block;margin-left:auto;margin-bottom:3px"><path d="M5 0Q5.5 4.4 10 5Q5.5 5.6 5 10Q4.5 5.6 0 5Q4.5 4.4 5 0Z" fill="rgba(16,30,62,.85)"/></svg>
+          <div class="g1">ELECTRONIC MUSIC</div>
+          <div class="g2">SWEET WORDS, LATE NIGHTS.</div>
+        </div>
+      </div>
+    </div>
+
+    <div class="window">
+      <div class="titlebar">
+        <span class="dot"></span>
+        LUNAK MEDIA PLAYER
+        <span class="spacer"></span>
+        <span class="fmt">mp3</span>
+        <span class="wbtns"><i class="wbtn"></i><i class="wbtn"></i><i class="wbtn on"></i></span>
+      </div>
+
+      <div class="chassis">
+
+        <div class="stage">
+          <div class="corner tl">COMPACT DISC</div>
+          <div class="corner tr">DIGITAL / 48</div>
+          <div class="corner bl">A VINYL</div>
+          <div class="corner br">LWK-006</div>
+
+          <div class="case">
+            <div class="spine"><span>cherry candy</span></div>
+            <div class="art">
+              <div class="glow"></div>
+              <div class="ring"></div>
+              <svg class="spark" width="34" height="34" viewBox="0 0 10 10"><path d="M5 0Q5.5 4.4 10 5Q5.5 5.6 5 10Q4.5 5.6 0 5Q4.5 4.4 5 0Z" fill="rgba(255,255,255,.85)"/></svg>
+              <div class="edition">06</div>
+              <div class="brand">LUNAK</div>
+            </div>
+          </div>
+
+          <div class="discwrap">
+            <div class="disc"></div>
+            <div class="label"></div>
+            <div class="discname">
+              <div class="nm">lunak</div>
+              <div class="bar"></div>
+              <div class="code">CHERRY CANDY / 006</div>
+            </div>
+          </div>
+        </div>
+
+        <div class="plate">
+          <div class="row">
+            <div>
+              <div class="kicker"><span>01</span><span>NOW PLAYING</span></div>
+              <div class="track">Cherry Candy</div>
+              <div class="artist">lunak</div>
+            </div>
+            <div class="clock">
+              <div class="state">PLAY ▶</div>
+              <div class="now">00:22</div>
+              <div class="total">/ 02:21</div>
+            </div>
+          </div>
+
+          <div class="spectrum" id="spectrum"></div>
+
+          <div class="scrub"></div>
+
+          <div class="foot"><span>VOL / 78</span><span>STEREO</span></div>
+        </div>
+
+        <div class="transport">
+          <div class="tstate">TRANSPORT<b>PLAYING</b></div>
+          <div class="pad">
+            <div class="btn">
+              <div class="circle"><svg width="9" height="9" viewBox="0 0 10 10"><rect x="2" y="2" width="6" height="6" rx=".5"/></svg></div>
+              <span>STOP</span>
+            </div>
+            <div class="btn">
+              <div class="circle"><svg width="10" height="10" viewBox="0 0 10 10"><path d="M9 1v8L4.5 5zM4.6 1v8L.1 5z"/></svg></div>
+              <span>PREV</span>
+            </div>
+            <div class="btn main" id="playbtn">
+              <div class="circle"><svg width="15" height="15" viewBox="0 0 10 10" id="piconsvg"><rect x="2.4" y="1.6" width="1.7" height="6.8" rx=".4"/><rect x="5.9" y="1.6" width="1.7" height="6.8" rx=".4"/></svg></div>
+              <span>PLAYING</span>
+            </div>
+            <div class="btn">
+              <div class="circle"><svg width="10" height="10" viewBox="0 0 10 10"><path d="M1 1v8l4.5-4zM.4 1v8L5 5z" transform="translate(4.6 0)"/></svg></div>
+              <span>NEXT</span>
+            </div>
+          </div>
+          <div class="vol">VOL
+            <div class="rail"></div>
+          </div>
+        </div>
+
+        <div class="winfoot">
+          <span>STEREO 44.1 KHz</span>
+          <span class="spacer"></span>
+          <span>LWK / 001</span>
+          <span class="barcode" id="barcode"></span>
+        </div>
+
+      </div>
+    </div>
+
+    <div class="lyrics">
+      <div class="lyr-top">
+        <div class="lyr-tag">LYRICS</div>
+        <div class="lyr-meta">LUNAK / CHERRY CANDY</div>
+      </div>
+      <div class="lyr-body">
+        <div class="lyr-main">Hooked On Every Kiss</div>
+        <div class="lyr-sub">迷上每次亲吻</div>
+      </div>
+      <div class="lyr-rule"></div>
+    </div>
+
+    <div class="libbar">
+      <span class="strong">LIBRARY</span>
+      <span class="dash"></span>
+      <span class="count">1 TRACK</span>
+      <span class="spacer"></span>
+      <span class="cta">IMPORT / BROWSE ›</span>
+    </div>
+
+    <div class="colophon">
+      LUNAK PLAYER / LOCAL SANDBOX STORAGE<br>
+      UNSIGNED BUILD — v1.0
+    </div>
+
+  </div>
+</div>
+
+<div class="caption">交互预览 · 点击唱片或播放键</div>
+
+<script>
+  // spectrum bars
+  const spec = document.getElementById('spectrum');
+  const widths = [1,1,2,1,1,2,3,1,1,2,1,1,3,1,2,1,1,2,1,3,1,1,2,1,1,2,3,1,1,2,1,1,2,1];
+  for (let i = 0; i < 52; i++) {
+    const b = document.createElement('i');
+    const mid = 1 - Math.abs(i - 25.5) / 30;
+    b.style.animationDuration = (0.42 + Math.random() * 0.55).toFixed(2) + 's';
+    b.style.animationDelay = (-Math.random() * 0.8).toFixed(2) + 's';
+    b.style.opacity = (0.3 + 0.6 * mid).toFixed(2);
+    spec.appendChild(b);
+  }
+
+  // barcode
+  const bc = document.getElementById('barcode');
+  [1,1,2,1,1,2,3,1,1,2,1,1,3,1,2,1,1,2].forEach(w => {
+    const i = document.createElement('i');
+    i.style.width = w + 'px';
+    bc.appendChild(i);
+  });
+
+  // play / pause toggle
+  const device = document.getElementById('device');
+  const playbtn = document.getElementById('playbtn');
+  const icon = document.getElementById('piconsvg');
+  let playing = true;
+  device.classList.add('playing');
+
+  function toggle() {
+    playing = !playing;
+    device.classList.toggle('playing', playing);
+    icon.innerHTML = playing
+      ? '<rect x="2.4" y="1.6" width="1.7" height="6.8" rx=".4"/><rect x="5.9" y="1.6" width="1.7" height="6.8" rx=".4"/>'
+      : '<path d="M2.6 1.2v7.6L9 5z"/>';
+    playbtn.querySelector('span').textContent = playing ? 'PLAYING' : 'PAUSED';
+    document.querySelector('.tstate b').textContent = playing ? 'PLAYING' : 'STANDBY';
+    document.querySelector('.clock .state').textContent = playing ? 'PLAY ▶' : 'PAUSE ▮▮';
+  }
+  playbtn.addEventListener('click', toggle);
+  document.querySelector('.discwrap').addEventListener('click', toggle);
+</script>
+</body>
+</html>

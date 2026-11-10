@@ -1,0 +1,61 @@
+name: Build unsigned IPA
+
+on:
+  push:
+    branches: [ main, master ]
+  workflow_dispatch:
+
+jobs:
+  build:
+    name: xcodebuild archive → ipa
+    runs-on: macos-14
+    timeout-minutes: 30
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Show toolchain
+        run: |
+          xcodebuild -version
+          xcode-select -p
+
+      - name: Install XcodeGen
+        run: brew install xcodegen
+
+      - name: Generate Xcode project
+        run: xcodegen generate
+
+      - name: Build unsigned archive
+        run: |
+          set -o pipefail
+          xcodebuild \
+            -project LunakPlayer.xcodeproj \
+            -scheme LunakPlayer \
+            -configuration Release \
+            -sdk iphoneos \
+            -destination 'generic/platform=iOS' \
+            -archivePath "$RUNNER_TEMP/LunakPlayer.xcarchive" \
+            CODE_SIGN_IDENTITY="" \
+            CODE_SIGNING_REQUIRED=NO \
+            CODE_SIGNING_ALLOWED=NO \
+            PROVISIONING_PROFILE_SPECIFIER="" \
+            archive
+
+      - name: Package IPA
+        run: |
+          APP="$RUNNER_TEMP/LunakPlayer.xcarchive/Products/Applications/LunakPlayer.app"
+          test -d "$APP"
+          mkdir -p "$RUNNER_TEMP/Payload"
+          cp -R "$APP" "$RUNNER_TEMP/Payload/"
+          cd "$RUNNER_TEMP"
+          zip -qry LunakPlayer-unsigned.ipa Payload
+          ls -lh LunakPlayer-unsigned.ipa
+
+      - name: Upload IPA
+        uses: actions/upload-artifact@v4
+        with:
+          name: LunakPlayer-unsigned-ipa
+          path: ${{ runner.temp }}/LunakPlayer-unsigned.ipa
+          if-no-files-found: error
+          retention-days: 30
